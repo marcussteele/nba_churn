@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import datetime
+
+# Get current year
+now = datetime.datetime.now()
+this_year = now.year
 
 # Make a request for the data
 req = requests.get('https://www.spotrac.com/nba/free-agents/')
@@ -23,14 +28,15 @@ data_2019['Salary'] = data_2019['Salary'].apply(lambda x: x.replace('$','').repl
 data_2019.set_index('Player',inplace=True)
 
 # list of years to scrape data for
-years = ['2011','2012','2013','2014','2015','2016','2017','2018']
+years = list(range(2011,this_year))
 
 # loop through the years to make a new dataframe for each year
 for year in years:
-    req = requests.get('https://www.spotrac.com/nba/free-agents/' + year)
+    req = requests.get('https://www.spotrac.com/nba/free-agents/' + str(year))
     content = req.content
     soup = BeautifulSoup(content)
     tables = soup.find_all('table')
+
     # creates a variable for each year
     # ex. data_2011
     globals()['data_%s' % year] = pd.read_html(str(tables))
@@ -43,9 +49,6 @@ for year in years:
     globals()['data_%s' % year]['Player'] = globals()['data_%s' % year]['Player'].apply(lambda x: x.replace('.',''))
     globals()['data_%s' % year].drop(globals()['data_%s' % year].iloc[:,0].name,axis=1,inplace=True)
     globals()['data_%s' % year].set_index('Player',inplace=True)
-
-data_2019['Avg. Salary'] = data_2019['2018-2019 AAV']
-data_2019.drop(['2018-2019 AAV','Rights'],axis=1,inplace=True)
 
 
 # Get data for players stats for every year
@@ -65,7 +68,7 @@ for year in years:
 
 
 for year in years:
-    last = int(year) - 1
+    last = year - 1
     req = requests.get('https://hoopshype.com/salaries/players/{}-{}/'.format(str(last),year))
     content = req.content
     soup = BeautifulSoup(content)
@@ -77,3 +80,20 @@ for year in years:
     globals()['salary_%s' % year] = pd.Series(data=a.iloc[:,1].apply(lambda x: x.replace(',','').replace('$','')))
     globals()['salary_%s' % year].rename('Salary',inplace=True)
 
+for year in years:
+    globals()['free_agent_%s' % year] = pd.concat([globals()['stats_%s' % year],globals()['salary_%s' % year]]
+                                                  ,axis=1,sort=False)
+
+for year in years:
+    globals()['final_%s' % year] = pd.concat([globals()['data_%s' % year],globals()['free_agent_%s' % year]]
+                                             ,axis=1,join_axes=[globals()['data_%s' % year].index])
+
+data = []
+for year in years:
+    data.append(globals()['final_%s' % year])
+
+final_data = pd.concat(data)
+final_data.to_pickle('data/final_data.p')
+
+if __name__ == "__main__":
+    pass
