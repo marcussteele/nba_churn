@@ -88,11 +88,46 @@ for year in years:
     globals()['final_%s' % year] = pd.concat([globals()['data_%s' % year],globals()['free_agent_%s' % year]]
                                              ,axis=1,join_axes=[globals()['data_%s' % year].index])
 
+for year in years:
+    req = requests.get('https://www.spotrac.com/nba/cap/{}/'.format(year))
+    content = req.content
+    soup = BeautifulSoup(content)
+    tables = soup.find('table')
+    globals()['team_cap_%s' % year] = pd.read_html(str(tables))
+    globals()['team_cap_%s' % year] = globals()['team_cap_%s' % year][0]
+    globals()['team_cap_%s' % year] = globals()['team_cap_%s' % year][['Team','Lux Tax Space']]
+    globals()['team_cap_%s' % year].set_index('Team')
+    globals()['team_cap_%s' % year]['Lux Tax Space'] = globals()['team_cap_%s' % year]['Lux Tax Space'].apply(lambda x: 
+                                                                                                              int(x.replace('$','')
+                                                                                                                  .replace(',','')
+                                                                                                                  .replace('*','')))
+
+team_dict = {'SAC':'Sacramento Kings','IND':'Indiana Pacers','NJN':'New Jersey Nets','HOU':'Houston Rockets'
+             ,'TOR':'Toronto Raptors','MIN':'Minnesota Timberwolves','GSW':'Golden State Warriors','UTH':'Utah Jazz'
+             ,'NOH':'New Orleans Hornets','CLE':'Cleveland Cavaliers','NYK':'New York Knicks','OKC':'Oklahoma City Thunder'
+             ,'DET':'Detroit Pistons','PHI':'Philadelphia 76ers','PHX':'Phoenix Suns','CHA':'Charlotte Bobcats'
+             ,'POR':'Portland Trail Blazers','MIL':'Milwaukee Bucks','MEM':'Memphis Grizzlies','WAS':'Washington Wizards'
+             ,'ORL':'Orlando Magic','LAC':'Los Angeles Clippers','CHI':'Chicago Bulls','ATL':'Atlanta Hawks'
+             ,'SAS':'San Antonio Spurs','DAL':'Dallas Mavericks','BOS':'Boston Celtics','MIA':'Miami Heat'
+             ,'LAL':'Los Angeles Lakers','DEN':'Denver Nuggets','NOP':'New Orleans Pelicans','BKN':'Brooklyn Nets'}
+
 data = []
 for year in years:
     data.append(globals()['final_%s' % year])
 
 final_data = pd.concat(data)
+
+team_cap = []
+for i in range(len(final_data)):
+    if type(final_data.iloc[i]['From']) == float:
+        team_cap.append(0)
+    else:
+        team = team_dict[final_data.iloc[i]['From']]
+        yr = final_data.iloc[i]['Year of Free Agency']
+        cap = globals()['team_cap_%s' % yr][globals()['team_cap_%s' % yr]['Team'] == team]['Lux Tax Space'].iloc[0]
+        team_cap.append(cap)
+final_data['Team Cap'] = team_cap
+
 final_data.to_pickle('data/final_data.p')
 
 if __name__ == "__main__":
