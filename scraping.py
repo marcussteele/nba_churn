@@ -15,6 +15,13 @@ data_2019 = pd.read_html(str(tables))
 # Output was a list. Get the dataframe out of the list
 data_2019 = data_2019[0]
 
+data_2019['Salary'] = data_2019['2018-2019 AAV']
+data_2019.drop(['2018-2019 AAV','Rights'],axis=1,inplace=True)
+data_2019['Player'] = data_2019.iloc[:,0]
+data_2019.drop(data_2019.iloc[:,0].name,axis=1,inplace=True)
+data_2019['Salary'] = data_2019['Salary'].apply(lambda x: x.replace('$','').replace(',',''))
+data_2019.set_index('Player',inplace=True)
+
 # list of years to scrape data for
 years = ['2011','2012','2013','2014','2015','2016','2017','2018']
 
