@@ -48,7 +48,7 @@ for year in years:
     globals()['data_%s' % year].drop(['{} Cap Hit'.format(year),'Dollars'],axis=1,inplace=True)
     globals()['data_%s' % year]['Year of Free Agency'] = year
     globals()['data_%s' % year]['Player'] = globals()['data_%s' % year].iloc[:,0]
-    globals()['data_%s' % year]['Player'] = globals()['data_%s' % year]['Player'].apply(lambda x: x.replace('.',''))
+    globals()['data_%s' % year]['Player'] = globals()['data_%s' % year]['Player'].apply(lambda x: x.replace('.','').replace("'",''))
     globals()['data_%s' % year].drop(globals()['data_%s' % year].iloc[:,0].name,axis=1,inplace=True)
     globals()['data_%s' % year].drop_duplicates(subset='Player',keep='first',inplace=True)
     globals()['data_%s' % year].set_index('Player',inplace=True)
@@ -93,18 +93,6 @@ for year in years:
     stats_data.append(globals()['stats_%s' % year])
 stats_data = pd.concat(stats_data)
 
-stats_data.rename(index={'JJ Barea': 'Jose Barea'},inplace=True)
-salary_data.rename(index={'Jose Juan Barea':'Jose Barea'},inplace=True)
-salary_data.rename(index={'Aleksandar Pavlovic':'Sasha Pavlovic'},inplace=True)
-salary_data.rename(index={'Hidayet Turkoglu':'Hedo Turkoglu'},inplace=True)
-salary_data.rename(index={'Maurice Williams':'Mo Williams'},inplace=True)
-salary_data.rename(index={'Nenê':'Nene Hilario'},inplace=True)
-salary_data.rename(index={'Kelenna Azubuike':'Kelenna Azubuike'},inplace=True)
-salary_data.rename(index={'Predrag Stojakovic':'Peja Stojakovic'},inplace=True)
-data.rename(index={'Luc Richard Mbah a Moute':'Luc Mbah a Moute'},inplace=True)
-data.rename(index={'John Lucas III':'John Lucas'},inplace=True)
-
-
 for year in years:
     last = year - 1
     req = requests.get('https://hoopshype.com/salaries/players/{}-{}/'.format(str(last),year))
@@ -114,6 +102,7 @@ for year in years:
     a = pd.read_html(str(tables))
     a = a[0]
     a = a.drop_duplicates(subset='Player',keep='first')
+    a['Player'] = a['Player'].apply(lambda x: x.replace("'",'').replace('.',''))
     a.set_index('Player',inplace=True)
     a['Year'] = year
     a['Salary1'] = a['{}/{}'.format(last,str(year)[2:])]
@@ -124,6 +113,29 @@ salary_data = []
 for year in years:
     salary_data.append(globals()['salary_%s' % year])
 salary_data = pd.concat(salary_data)
+
+# Change names to match dataframes together. Most are foreign names to their US names
+stats_data.rename(index={'Tim Hardaway':'Tim Hardaway Jr'},inplace=True)
+stats_data.rename(index={'Patty Mills':'Patrick Mills'},inplace=True)
+stats_data.rename(index={'Ish Smith':'Ishmael Smith'},inplace=True)
+stats_data.rename(index={'JJ Barea': 'Jose Barea'},inplace=True)
+stats_data.rename(index={'Eugene Jeter':'Pooh Jeter'},inplace=True)
+stats_data.rename(index={'Byron Mullens':'BJ Mullens'},inplace=True)
+stats_data.rename(index={'Glenn Robinson':'Glenn Robinson III'},inplace=True)
+stats_data.rename(index={'Lou Amundson':'Louis Amundson'},inplace=True)
+stats_data.rename(index={'Lou Williams':'Louis Williams'},inplace=True)
+salary_data.rename(index={'Jose Juan Barea':'Jose Barea'},inplace=True)
+salary_data.rename(index={'Aleksandar Pavlovic':'Sasha Pavlovic'},inplace=True)
+salary_data.rename(index={'Hidayet Turkoglu':'Hedo Turkoglu'},inplace=True)
+salary_data.rename(index={'Maurice Williams':'Mo Williams'},inplace=True)
+salary_data.rename(index={'Nenê':'Nene Hilario'},inplace=True)
+salary_data.rename(index={'Moe Harkless':'Maurice Harkless'},inplace=True)
+salary_data.rename(index={'Kelenna Azubuike':'Kelenna Azubuike'},inplace=True)
+salary_data.rename(index={'Predrag Stojakovic':'Peja Stojakovic'},inplace=True)
+data.rename(index={'Luc Richard Mbah a Moute':'Luc Mbah a Moute'},inplace=True)
+salary_data.rename(index={'John Lucas':'John Lucas III'},inplace=True)
+data.rename(index={'Darrun Hilliard II':'Darrun Hilliard'},inplace=True)
+data.rename(index={'Otto Porter Jr':'Otto Porter'},inplace=True)
 
 
 for year in years:
