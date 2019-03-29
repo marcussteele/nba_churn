@@ -45,7 +45,7 @@ for year in years:
     globals()['data_%s' % year] = globals()['data_%s' % year][0]
     # Take out totals row and cap hit column
     globals()['data_%s' % year].drop(globals()['data_%s' % year].tail(1).index,inplace=True)
-    globals()['data_%s' % year].drop(['{} Cap Hit'.format(year),'Dollars'],axis=1,inplace=True)
+    globals()['data_%s' % year].drop(['{} Cap Hit'.format(year),'Dollars','Age'],axis=1,inplace=True)
     globals()['data_%s' % year]['Year of Free Agency'] = year
     globals()['data_%s' % year]['Player'] = globals()['data_%s' % year].iloc[:,0]
     globals()['data_%s' % year]['Player'] = globals()['data_%s' % year]['Player'].apply(lambda x: x.replace('.','').replace("'",''))
@@ -78,7 +78,7 @@ for year in years:
     tables = soup.find('table')
     globals()['stats_%s' % year] = pd.read_html(str(tables))
     globals()['stats_%s' % year] = globals()['stats_%s' % year][0]
-    globals()['stats_%s' % year].drop(['Rk','Age','DRB','ORB'],axis=1,inplace=True)
+    globals()['stats_%s' % year].drop(['Rk','DRB','ORB'],axis=1,inplace=True)
     globals()['stats_%s' % year].drop_duplicates(subset='Player',keep='first',inplace=True)
     globals()['stats_%s' % year]['Player'] = globals()['stats_%s' % year]['Player'].apply(lambda x: x.replace("'",'')
                                                                                           .replace('.','')
