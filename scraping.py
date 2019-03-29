@@ -93,9 +93,16 @@ for year in years:
     stats_data.append(globals()['stats_%s' % year])
 stats_data = pd.concat(stats_data)
 
-stats_data.rename(index={'Luc Mbah a Moute': 'Luc Richard Mbah a Moute'},inplace=True)
 stats_data.rename(index={'JJ Barea': 'Jose Barea'},inplace=True)
-stats_data.rename(index={'John Lucas': 'John Lucas III'},inplace=True)
+salary_data.rename(index={'Jose Juan Barea':'Jose Barea'},inplace=True)
+salary_data.rename(index={'Aleksandar Pavlovic':'Sasha Pavlovic'},inplace=True)
+salary_data.rename(index={'Hidayet Turkoglu':'Hedo Turkoglu'},inplace=True)
+salary_data.rename(index={'Maurice Williams':'Mo Williams'},inplace=True)
+salary_data.rename(index={'Nenê':'Nene Hilario'},inplace=True)
+salary_data.rename(index={'Kelenna Azubuike':'Kelenna Azubuike'},inplace=True)
+salary_data.rename(index={'Predrag Stojakovic':'Peja Stojakovic'},inplace=True)
+data.rename(index={'Luc Richard Mbah a Moute':'Luc Mbah a Moute'},inplace=True)
+data.rename(index={'John Lucas III':'John Lucas'},inplace=True)
 
 
 for year in years:
