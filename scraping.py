@@ -30,11 +30,11 @@ data_2019['Salary'] = data_2019['Salary'].apply(lambda x: x.replace('$','').repl
 data_2019.set_index('Player',inplace=True)
 
 # list of years to scrape data for
-years = list(range(2011,this_year))
+years = list(range(2011,this_year+1))
 
 
 # loop through the years to make a new dataframe for each year
-for year in years:
+for year in years[:-1]:
     req = requests.get('https://www.spotrac.com/nba/free-agents/' + str(year))
     content = req.content
     soup = BeautifulSoup(content,"lxml")
@@ -54,11 +54,6 @@ for year in years:
     globals()['data_%s' % year].set_index('Player',inplace=True)
 
 
-data = []
-for year in years:
-    data.append(globals()['data_%s' % year])
-
-data=pd.concat(data)
 
 # List of teams that made the playoffs every year
 playoffs_2011 = ['IND','MIA','CHI','POR','DAL','PHI','ATL','NYK','SAS','OKC','DEN','LAL','BOS','ORL','CHA','MEM']
@@ -71,7 +66,7 @@ playoffs_2017 = ['IND','CLE','UTH','LAC','MEM','SAS','MIL','TOR','CHI','BOS','PO
 playoffs_2018 = ['SAS','GSW','MIA','PHI','NOP','POR','WAS','TOR','MIL','BOS','IND','CLE','MIN','HOU','UTH','OKC']
 
 # Get data for players stats for every year
-for year in years:
+for year in range(2009,this_year+1):
     req = requests.get("https://www.basketball-reference.com/leagues/NBA_{}_per_game.html".format(year))
     content = req.content
     soup = BeautifulSoup(content,"lxml")
@@ -86,6 +81,8 @@ for year in years:
     globals()['stats_%s' % year].set_index('Player',inplace=True)
     globals()['stats_%s' % year]['Year'] = year
     # Add boolean column where 1: team made the playoffs, 0: team did not make the playoffs
+
+for year in years[:-1]:
     globals()['stats_%s' % year]['Playoffs'] = globals()['stats_%s' % year]['Tm'].apply(lambda x: True if x in globals()['playoffs_%s' % year] else False).astype(int)
 
 stats_data = []
@@ -93,7 +90,7 @@ for year in years:
     stats_data.append(globals()['stats_%s' % year])
 stats_data = pd.concat(stats_data)
 
-for year in years:
+for year in years[:-1]:
     last = year - 1
     req = requests.get('https://hoopshype.com/salaries/players/{}-{}/'.format(str(last),year))
     content = req.content
@@ -109,34 +106,22 @@ for year in years:
     a['Salary'] = a['Salary1'].apply(lambda x: x.replace('$','').replace(',',''))
     globals()['salary_%s' % year] = a[['Salary','Year']]
 
+req = requests.get('https://hoopshype.com/salaries/players/')
+content = req.content
+soup = BeautifulSoup(content,"lxml")
+tables = soup.find('table')
+globals()['salary_%s' % this_year] = pd.read_html(str(tables))[0]
+globals()['salary_%s' % this_year] = globals()['stats_%s' % this_year].drop_duplicates(subset='Player',keep='first')
+globals()['salary_%s' % this_year]['Player'] = globals()['stats_%s' % this_year]['Player'].apply(lambda x: x.replace("'",'').replace('.',''))
+globals()['salary_%s' % this_year].set_index('Player',inplace=True)
+globals()['salary_%s' % this_year]['Year'] = this_year
+globals()['salary_%s' % this_year] = globals()['stats_%s' % this_year][['{}/{}'.format(this_year-1,str(this_year)[-2:]),'Year']]
+
+
 salary_data = []
 for year in years:
     salary_data.append(globals()['salary_%s' % year])
 salary_data = pd.concat(salary_data)
-
-# Change names to match dataframes together. Most are foreign names to their US names
-stats_data.rename(index={'Tim Hardaway':'Tim Hardaway Jr'},inplace=True)
-stats_data.rename(index={'Patty Mills':'Patrick Mills'},inplace=True)
-stats_data.rename(index={'Ish Smith':'Ishmael Smith'},inplace=True)
-stats_data.rename(index={'JJ Barea': 'Jose Barea'},inplace=True)
-stats_data.rename(index={'Eugene Jeter':'Pooh Jeter'},inplace=True)
-stats_data.rename(index={'Byron Mullens':'BJ Mullens'},inplace=True)
-stats_data.rename(index={'Glenn Robinson':'Glenn Robinson III'},inplace=True)
-stats_data.rename(index={'Lou Amundson':'Louis Amundson'},inplace=True)
-stats_data.rename(index={'Lou Williams':'Louis Williams'},inplace=True)
-salary_data.rename(index={'Jose Juan Barea':'Jose Barea'},inplace=True)
-salary_data.rename(index={'Aleksandar Pavlovic':'Sasha Pavlovic'},inplace=True)
-salary_data.rename(index={'Hidayet Turkoglu':'Hedo Turkoglu'},inplace=True)
-salary_data.rename(index={'Maurice Williams':'Mo Williams'},inplace=True)
-salary_data.rename(index={'Nenê':'Nene Hilario'},inplace=True)
-salary_data.rename(index={'Moe Harkless':'Maurice Harkless'},inplace=True)
-salary_data.rename(index={'Kelenna Azubuike':'Kelenna Azubuike'},inplace=True)
-salary_data.rename(index={'Predrag Stojakovic':'Peja Stojakovic'},inplace=True)
-data.rename(index={'Luc Richard Mbah a Moute':'Luc Mbah a Moute'},inplace=True)
-salary_data.rename(index={'John Lucas':'John Lucas III'},inplace=True)
-data.rename(index={'Darrun Hilliard II':'Darrun Hilliard'},inplace=True)
-data.rename(index={'Otto Porter Jr':'Otto Porter'},inplace=True)
-
 
 for year in years:
     req = requests.get('https://www.spotrac.com/nba/cap/{}/'.format(year))
@@ -174,7 +159,7 @@ data_2012['From'].iloc[209] = 'BKN'
 data_2012['From'].iloc[233] = 'BKN'
 data_2013['From'].iloc[284] = 'NOP'
 
-for year in years:
+for year in years[:-1]:
     team_cap = []
     for i in range(len(globals()['data_%s' % year])):
         if type(globals()['data_%s' % year].iloc[i]['From']) == float:
@@ -185,6 +170,38 @@ for year in years:
             team_cap.append(cap)
     globals()['data_%s' % year]['Team Cap'] = team_cap
 
+data = []
+for year in years[:-1]:
+    data.append(globals()['data_%s' % year])
+
+data=pd.concat(data)
+
+
+# Change names to match dataframes together. Most are foreign names to their US names
+stats_data.rename(index={'Tim Hardaway':'Tim Hardaway Jr'},inplace=True)
+stats_data.rename(index={'Patty Mills':'Patrick Mills'},inplace=True)
+stats_data.rename(index={'Ish Smith':'Ishmael Smith'},inplace=True)
+stats_data.rename(index={'JJ Barea': 'Jose Barea'},inplace=True)
+stats_data.rename(index={'Eugene Jeter':'Pooh Jeter'},inplace=True)
+stats_data.rename(index={'Byron Mullens':'BJ Mullens'},inplace=True)
+stats_data.rename(index={'Glenn Robinson':'Glenn Robinson III'},inplace=True)
+stats_data.rename(index={'Lou Amundson':'Louis Amundson'},inplace=True)
+stats_data.rename(index={'Lou Williams':'Louis Williams'},inplace=True)
+salary_data.rename(index={'Jose Juan Barea':'Jose Barea'},inplace=True)
+salary_data.rename(index={'Aleksandar Pavlovic':'Sasha Pavlovic'},inplace=True)
+salary_data.rename(index={'Hidayet Turkoglu':'Hedo Turkoglu'},inplace=True)
+salary_data.rename(index={'Maurice Williams':'Mo Williams'},inplace=True)
+salary_data.rename(index={'Nenê':'Nene Hilario'},inplace=True)
+salary_data.rename(index={'Moe Harkless':'Maurice Harkless'},inplace=True)
+salary_data.rename(index={'Kelenna Azubuike':'Kelenna Azubuike'},inplace=True)
+salary_data.rename(index={'Predrag Stojakovic':'Peja Stojakovic'},inplace=True)
+data.rename(index={'Luc Richard Mbah a Moute':'Luc Mbah a Moute'},inplace=True)
+salary_data.rename(index={'John Lucas':'John Lucas III'},inplace=True)
+data.rename(index={'Darrun Hilliard II':'Darrun Hilliard'},inplace=True)
+data.rename(index={'Otto Porter Jr':'Otto Porter'},inplace=True)
+
+
+
 free_agents = defaultdict(pd.DataFrame)
 stats = defaultdict(pd.DataFrame)
 salary = defaultdict(pd.DataFrame)
@@ -194,6 +211,7 @@ for year in years:
         free_agents[player] = data[data.index == player]
         stats[player] = stats_data[stats_data.index == player]
         salary[player] = salary_data[salary_data.index == player]
+
 
 free_agents_df = pd.DataFrame()
 for player in free_agents:
