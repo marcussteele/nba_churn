@@ -11,13 +11,18 @@ PROCESS:
 - Combine data from different years and websites
 - Deal with missing data and data that is not uniform across websites
 - Explore data
+- PCA
+- Cluster similar players into groups
+- Ran a boosting model on each group to predict who is going to churn
 
 HOW TO RUN:
 - In scraping.py there is code that will scrape the players statistics, salary, and team data.
 - It then combines and saves this data into a pickle file
 
+RESULTS:
+
 IDEAS:
-- Player career stats compared to current year, minutes compared to career minutes, clustering to find groups of players that leave
+- 
 
 Data sources:
 https://www.spotrac.com/nba/
