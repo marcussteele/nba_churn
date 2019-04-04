@@ -13,6 +13,7 @@ PROCESS:
 - Explore data
 - PCA
 - Cluster similar players into groups
+![](clusters_pca.png)
 - Ran a boosting model on each group to predict who is going to churn
 
 HOW TO RUN:
