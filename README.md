@@ -4,7 +4,7 @@
 1. [Introduction](#intro)
 2. [Process] (#process)
 
-##Introduction
+#intro
 GOAL: 
 In recent years there have been more big name players that are leaving their teams and going to play with other teams. They are going to play with friends, going to play where they are paid more, or leaving to go to teams to win a championship. A few recent examples, LeBron James, Kevin Durant, and Kyrie Irving.
 
