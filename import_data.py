@@ -20,15 +20,16 @@ def combine_data(salary_data,stats_data,free_agent_data):
     for player in free_agent_data.index.unique():
         p = free_agent_data[free_agent_data.index==player]
         for i in range(len(p)):
-            year = p['Year of Free Agency'].iloc[i]
-            df1 = p[p['Year of Free Agency']==year]
+            year = p['Year'].iloc[i]
+            df1 = p[p['Year']==year]
             df2 = stats_data[(stats_data.index==player)&(stats_data['Year']==year)]
             df3 = salary_data[(salary_data.index==player)&(salary_data['Year']==year)]
-            temp = pd.concat([df1,df2,df3],axis=1)
+            temp = pd.concat([df1,df2,df3],axis=1,sort=False)
             if len(final_data) == 0:
                 final_data = temp
             else:
                 final_data = pd.concat([final_data,temp])
+    final_data = final_data.loc[:,~final_data.columns.duplicated()]
     return final_data
 
 

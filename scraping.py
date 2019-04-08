@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from web_scraping import get_free_agents,get_salaries,get_stats
 import pandas as pd
 import datetime
 from collections import defaultdict
@@ -9,133 +10,97 @@ import pickle
 now = datetime.datetime.now()
 this_year = now.year
 
-# Make a request for the data
-req = requests.get('https://www.spotrac.com/nba/free-agents/')
-req.status_code
-# get just the content from the html
-content = req.content
-soup = BeautifulSoup(content,"lxml")
-# Get only the table from the webpage
-tables = soup.find_all('table')
-# Turn the table to a pandas dataframe
-data_2019 = pd.read_html(str(tables))
-# Output was a list. Get the dataframe out of the list
-data_2019 = data_2019[0]
-
-data_2019['Salary'] = data_2019['2018-2019 AAV']
-data_2019.drop(['2018-2019 AAV','Rights'],axis=1,inplace=True)
-data_2019['Player'] = data_2019.iloc[:,0]
-data_2019.drop(data_2019.iloc[:,0].name,axis=1,inplace=True)
-data_2019['Salary'] = data_2019['Salary'].apply(lambda x: x.replace('$','').replace(',',''))
-data_2019.set_index('Player',inplace=True)
-
 # list of years to scrape data for
 years = list(range(2011,this_year+1))
 
-
 # loop through the years to make a new dataframe for each year
-for year in years[:-1]:
-    req = requests.get('https://www.spotrac.com/nba/free-agents/' + str(year))
-    content = req.content
-    soup = BeautifulSoup(content,"lxml")
-    tables = soup.find_all('table')
-    # creates a variable for each year
-    # ex. data_2011
-    globals()['data_%s' % year] = pd.read_html(str(tables))
-    globals()['data_%s' % year] = globals()['data_%s' % year][0]
-    # Take out totals row and cap hit column
-    globals()['data_%s' % year].drop(globals()['data_%s' % year].tail(1).index,inplace=True)
-    globals()['data_%s' % year].drop(['{} Cap Hit'.format(year),'Dollars','Age'],axis=1,inplace=True)
-    globals()['data_%s' % year]['Year of Free Agency'] = year
-    globals()['data_%s' % year]['Player'] = globals()['data_%s' % year].iloc[:,0]
-    globals()['data_%s' % year]['Player'] = globals()['data_%s' % year]['Player'].apply(lambda x: x.replace('.','').replace("'",''))
-    globals()['data_%s' % year].drop(globals()['data_%s' % year].iloc[:,0].name,axis=1,inplace=True)
-    globals()['data_%s' % year].drop_duplicates(subset='Player',keep='first',inplace=True)
-    globals()['data_%s' % year].set_index('Player',inplace=True)
+data_dict = dict()
+for year in years:
+    if year == this_year:
+        url = 'https://www.spotrac.com/nba/free-agents/'
+        # Make a request for the data
+        req = requests.get(url)
+        # get just the content from the html
+        content = req.content
+        soup = BeautifulSoup(content,"lxml")
+        # Get only the table from the webpage
+        tables = soup.find_all('table')
+        # Turn the table to a pandas dataframe
+        data = pd.read_html(str(tables))[0]
+        data['Player'] = data.iloc[:,0]
+        data.drop_duplicates(subset='Player',keep='first',inplace=True)
+        data.set_index('Player',inplace=True)
+        data.drop([data.iloc[:,-1].name,data.iloc[:,0].name,'Rights'],axis=1,inplace=True)
+        data['From'] = data['Team']
+        data['Year'] = year
+        data = data[['From','Type','Pos.','Year']]
+        data_dict['data_%s' % year] = data
 
+    else:
+        url = 'https://www.spotrac.com/nba/free-agents/' + str(year)
+        data = get_free_agents(url,year)
+        data_dict['data_%s' % year] = data
 
 
 # List of teams that made the playoffs every year
-playoffs_2011 = ['IND','MIA','CHI','POR','DAL','PHI','ATL','NYK','SAS','OKC','DEN','LAL','BOS','ORL','CHA','MEM']
-playoffs_2012 = ['PHI','CHI','ORL','IND','NYK','MIA','DAL','OKC','BOS','ATL','DEN','LAL','LAC','MEM','UTH','SAS']
-playoffs_2013 = ['CHI','BKN','GSW','DEN','MEM','LAC','BOS','NYK','ATL','IND','MIL','MIA','HOU','OKC','LAL','SAS']
-playoffs_2014 = ['ATL','IND','GSW','LAC','MEM','OKC','BKN','TOR','WAS','CHI','POR','HOU','CHA','MIA','DAL','SAS']
-playoffs_2015 = ['MIL','CHI','NOP','GSW','DAL','HOU','WAS','TOR','BKN','ATL','BOS','CLE','SAS','LAC','POR','MEM']
-playoffs_2016 = ['BOS','ATL','HOU','GSW','DAL','OKC','IND','TOR','DET','CLE','POR','LAC','CHA','MIA','MEM','SAS']
-playoffs_2017 = ['IND','CLE','UTH','LAC','MEM','SAS','MIL','TOR','CHI','BOS','POR','GSW','OKC','HOU','ATL','WAS']
-playoffs_2018 = ['SAS','GSW','MIA','PHI','NOP','POR','WAS','TOR','MIL','BOS','IND','CLE','MIN','HOU','UTH','OKC']
+playoffs_dict = {'playoffs_2011':['IND','MIA','CHI','POR','DAL','PHI','ATL','NYK','SAS','OKC','DEN','LAL','BOS','ORL','CHA','MEM'],
+            'playoffs_2012':['PHI','CHI','ORL','IND','NYK','MIA','DAL','OKC','BOS','ATL','DEN','LAL','LAC','MEM','UTH','SAS'],
+            'playoffs_2013':['CHI','BKN','GSW','DEN','MEM','LAC','BOS','NYK','ATL','IND','MIL','MIA','HOU','OKC','LAL','SAS'],
+            'playoffs_2014':['ATL','IND','GSW','LAC','MEM','OKC','BKN','TOR','WAS','CHI','POR','HOU','CHA','MIA','DAL','SAS'],
+            'playoffs_2015':['MIL','CHI','NOP','GSW','DAL','HOU','WAS','TOR','BKN','ATL','BOS','CLE','SAS','LAC','POR','MEM'],
+            'playoffs_2016':['BOS','ATL','HOU','GSW','DAL','OKC','IND','TOR','DET','CLE','POR','LAC','CHA','MIA','MEM','SAS'],
+            'playoffs_2017':['IND','CLE','UTH','LAC','MEM','SAS','MIL','TOR','CHI','BOS','POR','GSW','OKC','HOU','ATL','WAS'],
+            'playoffs_2018':['SAS','GSW','MIA','PHI','NOP','POR','WAS','TOR','MIL','BOS','IND','CLE','MIN','HOU','UTH','OKC'],
+            'playoffs_2019':['MIL','TOR','PHI','BOS','ORL','IND','BKN','GSW','DEN','HOU','POR','UTH','OKC','SAS','LAC','DET']}
 
 # Get data for players stats for every year
+stats_dict = dict()
 for year in range(2009,this_year+1):
-    req = requests.get("https://www.basketball-reference.com/leagues/NBA_{}_per_game.html".format(year))
-    content = req.content
-    soup = BeautifulSoup(content,"lxml")
-    tables = soup.find('table')
-    globals()['stats_%s' % year] = pd.read_html(str(tables))
-    globals()['stats_%s' % year] = globals()['stats_%s' % year][0]
-    globals()['stats_%s' % year].drop(['Rk','DRB','ORB'],axis=1,inplace=True)
-    globals()['stats_%s' % year].drop_duplicates(subset='Player',keep='first',inplace=True)
-    globals()['stats_%s' % year]['Player'] = globals()['stats_%s' % year]['Player'].apply(lambda x: x.replace("'",'')
-                                                                                          .replace('.','')
-                                                                                          .replace('*',''))
-    globals()['stats_%s' % year].set_index('Player',inplace=True)
-    globals()['stats_%s' % year]['Year'] = year
-    # Add boolean column where 1: team made the playoffs, 0: team did not make the playoffs
-
+    url = "https://www.basketball-reference.com/leagues/NBA_{}_per_game.html".format(year)
+    data = get_stats(url,year)
+    data['Year'] = year
+    stats_dict['stats_%s' % year] = data
+    
+# Add boolean column where 1: team made the playoffs, 0: team did not make the playoffs
 for year in years[:-1]:
-    globals()['stats_%s' % year]['Playoffs'] = globals()['stats_%s' % year]['Tm'].apply(lambda x: True if x in globals()['playoffs_%s' % year] else False).astype(int)
+    stats_dict['stats_%s' % year]['Playoffs'] = stats_dict['stats_%s' % year]['Tm'].apply(lambda x: True if x in playoffs_dict['playoffs_%s' % year] else False).astype(int)
 
-stats_data = []
+stats_data = pd.concat(stats_dict.values(),sort=False)
+
+total_cap_dict = {'2010':57700000,'2011':58044000,'2012':58044000,'2013':58044000,'2014':58679000,'2015':63065000
+            ,'2016':70000000,'2017':94143000,'2018':99093000,'2019':101869000,'2020':109000000}
+
+salary_dict = dict()
 for year in years:
-    stats_data.append(globals()['stats_%s' % year])
-stats_data = pd.concat(stats_data)
-
-for year in years[:-1]:
-    last = year - 1
-    req = requests.get('https://hoopshype.com/salaries/players/{}-{}/'.format(str(last),year))
-    content = req.content
-    soup = BeautifulSoup(content,"lxml")
-    tables = soup.find('table')
-    a = pd.read_html(str(tables))
-    a = a[0]
-    a = a.drop_duplicates(subset='Player',keep='first')
-    a['Player'] = a['Player'].apply(lambda x: x.replace("'",'').replace('.',''))
-    a.set_index('Player',inplace=True)
-    a['Year'] = year
-    a['Salary1'] = a['{}/{}'.format(last,str(year)[2:])]
-    a['Salary'] = a['Salary1'].apply(lambda x: x.replace('$','').replace(',',''))
-    globals()['salary_%s' % year] = a[['Salary','Year']]
-
-req = requests.get('https://hoopshype.com/salaries/players/')
-content = req.content
-soup = BeautifulSoup(content,"lxml")
-tables = soup.find('table')
-globals()['salary_%s' % this_year] = pd.read_html(str(tables))[0]
-globals()['salary_%s' % this_year] = globals()['stats_%s' % this_year].drop_duplicates(subset='Player',keep='first')
-globals()['salary_%s' % this_year]['Player'] = globals()['stats_%s' % this_year]['Player'].apply(lambda x: x.replace("'",'').replace('.',''))
-globals()['salary_%s' % this_year].set_index('Player',inplace=True)
-globals()['salary_%s' % this_year]['Year'] = this_year
-globals()['salary_%s' % this_year] = globals()['stats_%s' % this_year][['{}/{}'.format(this_year-1,str(this_year)[-2:]),'Year']]
+    if year == this_year:
+        url = 'https://hoopshype.com/salaries/players/'
+    
+    else:
+        url = 'https://hoopshype.com/salaries/players/{}-{}/'.format(str(year-1),year)
+    data = get_salaries(url,year)
+    data['Salary1'] = data['{}/{}'.format(year-1,str(year)[2:])]
+    data['Salary'] = data['Salary1'].apply(lambda x: x.replace('$','').replace(',',''))
+    data['Total Cap'] = total_cap_dict[str(year)]
+    data['Salary %'] = data['Salary'].astype(float) / data['Total Cap']
+    salary_dict['salary_%s' % year] = data[['Salary','Salary %','Year']]
 
 
-salary_data = []
-for year in years:
-    salary_data.append(globals()['salary_%s' % year])
-salary_data = pd.concat(salary_data)
+salary_data = pd.concat(salary_dict.values())
 
+team_cap_dict = dict()
 for year in years:
     req = requests.get('https://www.spotrac.com/nba/cap/{}/'.format(year))
     content = req.content
     soup = BeautifulSoup(content,"lxml")
     tables = soup.find('table')
-    globals()['team_cap_%s' % year] = pd.read_html(str(tables))
-    globals()['team_cap_%s' % year] = globals()['team_cap_%s' % year][0]
-    globals()['team_cap_%s' % year] = globals()['team_cap_%s' % year][['Team','Lux Tax Space']]
-    globals()['team_cap_%s' % year].set_index('Team')
-    globals()['team_cap_%s' % year]['Lux Tax Space'] = globals()['team_cap_%s' % year]['Lux Tax Space'].apply(lambda x: 
+    team_cap_dict['team_cap_%s' % year] = pd.read_html(str(tables))[0]
+    team_cap_dict['team_cap_%s' % year] = team_cap_dict['team_cap_%s' % year][['Team','Lux Tax Space']]
+    team_cap_dict['team_cap_%s' % year].set_index('Team')
+    team_cap_dict['team_cap_%s' % year]['Lux Tax Space'] = team_cap_dict['team_cap_%s' % year]['Lux Tax Space'].apply(lambda x: 
                                                                                                               int(x.replace('$','')
                                                                                                                   .replace(',','')
                                                                                                                   .replace('*','')))
+
 
 team_dict = {'SAC':'Sacramento Kings','IND':'Indiana Pacers','NJN':'New Jersey Nets','HOU':'Houston Rockets'
              ,'TOR':'Toronto Raptors','MIN':'Minnesota Timberwolves','GSW':'Golden State Warriors','UTH':'Utah Jazz'
@@ -146,35 +111,31 @@ team_dict = {'SAC':'Sacramento Kings','IND':'Indiana Pacers','NJN':'New Jersey N
              ,'SAS':'San Antonio Spurs','DAL':'Dallas Mavericks','BOS':'Boston Celtics','MIA':'Miami Heat'
              ,'LAL':'Los Angeles Lakers','DEN':'Denver Nuggets','NOP':'New Orleans Pelicans','BKN':'Brooklyn Nets'}
 
-team_cap_2011['Team'].iloc[15] = 'Charlotte Hornets'
-team_cap_2012['Team'].iloc[3] = 'Charlotte Hornets'
-team_cap_2012['Team'].iloc[28] = 'Brooklyn Nets'
-team_cap_2013['Team'].iloc[8] = 'Charlotte Hornets'
-data_2012['From'].iloc[100] = 'BKN'
-data_2012['From'].iloc[128] = 'BKN'
-data_2012['From'].iloc[132] = 'BKN'
-data_2012['From'].iloc[174] = 'BKN'
-data_2012['From'].iloc[184] = 'BKN'
-data_2012['From'].iloc[209] = 'BKN'
-data_2012['From'].iloc[233] = 'BKN'
-data_2013['From'].iloc[284] = 'NOP'
+team_cap_dict['team_cap_2011']['Team'].iloc[15] = 'Charlotte Hornets'
+team_cap_dict['team_cap_2012']['Team'].iloc[3] = 'Charlotte Hornets'
+team_cap_dict['team_cap_2012']['Team'].iloc[28] = 'Brooklyn Nets'
+team_cap_dict['team_cap_2013']['Team'].iloc[8] = 'Charlotte Hornets'
+data_dict['data_2012']['From'].iloc[100] = 'BKN'
+data_dict['data_2012']['From'].iloc[128] = 'BKN'
+data_dict['data_2012']['From'].iloc[132] = 'BKN'
+data_dict['data_2012']['From'].iloc[174] = 'BKN'
+data_dict['data_2012']['From'].iloc[184] = 'BKN'
+data_dict['data_2012']['From'].iloc[209] = 'BKN'
+data_dict['data_2012']['From'].iloc[233] = 'BKN'
+data_dict['data_2013']['From'].iloc[284] = 'NOP'
 
-for year in years[:-1]:
+for year in years:
     team_cap = []
-    for i in range(len(globals()['data_%s' % year])):
-        if type(globals()['data_%s' % year].iloc[i]['From']) == float:
+    for i in range(len(data_dict['data_%s' % year])):
+        if type(data_dict['data_%s' % year].iloc[i]['From']) == float:
             team_cap.append(0)
         else:
-            team = team_dict[globals()['data_%s' % year].iloc[i]['From']]
-            cap = globals()['team_cap_%s' % year][globals()['team_cap_%s' % year]['Team'] == team]['Lux Tax Space'].iloc[0]
+            team = team_dict[data_dict['data_%s' % year].iloc[i]['From']]
+            cap = team_cap_dict['team_cap_%s' % year][team_cap_dict['team_cap_%s' % year]['Team'] == team]['Lux Tax Space'].iloc[0]
             team_cap.append(cap)
-    globals()['data_%s' % year]['Team Cap'] = team_cap
+    data_dict['data_%s' % year]['Team Cap'] = team_cap
 
-data = []
-for year in years[:-1]:
-    data.append(globals()['data_%s' % year])
-
-data=pd.concat(data)
+data = pd.concat(data_dict.values())
 
 
 # Change names to match dataframes together. Most are foreign names to their US names
