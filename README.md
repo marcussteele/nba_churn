@@ -20,6 +20,7 @@ First I webscraped data from a couple different websites. I gathered stats data 
 After scraping all this data, I combined it all together so I could run it through a model to test it.  
 
 The next step was to explore the data. After looking at the data I noticed that players salaries seemed to go up every year. That makes sense because the salary cap in the NBA was going up every year. (Mostly because they were making more money from TV deals)
+![](salary_cap_change.png)
 I read about players salaries a little bit and learned that most salaries are calculated but taking a percentage of the salary cap. A max player is someone who makes 35% of the total salary cap. The average across the whole league is 5.7%. I decided to add this into the model to see if it has an effect on players leaving or not.
 
 Some other things i noticed was that surprisingly 75.5% of players leave at the end of their contracts. On the other side there are players like Dirk Nowitzki who have been on the same team for 20 years. I added a feature of years with the same team to see if that has an effect on a player leaving.
