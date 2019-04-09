@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def get_data(file):
     '''
     INPUT: Takes in a path to a pickle file that you want to load in.
@@ -9,6 +10,18 @@ def get_data(file):
     data = pd.read_pickle(file)
     return data
 
+def add_features(df):
+    df['MP'] = df['MP'].astype(float)
+    df['PTS'] = df['PTS'].astype(float)
+    new_column = df.groupby('Player',as_index=False,sort=False)['MP'].rolling(3,min_periods=1).mean()
+    new_column1 = df.groupby('Player',as_index=False,sort=False)['PTS'].rolling(3,min_periods=1).mean()
+    df['Diff MP3'] = df['MP'] - new_column.values
+    df['Diff PTS3'] = df['PTS'] - new_column1.values
+    df['Traded'] = (df['Tm'] == 'TOT').astype(int)
+    df['one'] = 1
+    df['Years Same Team'] = df.groupby(['Player','Tm'])['one'].cumsum()
+    df.drop('one',axis=1,inplace=True)
+    return df
 
 def combine_data(salary_data,stats_data,free_agent_data):
     '''
@@ -35,4 +48,4 @@ def combine_data(salary_data,stats_data,free_agent_data):
 
 
 if __name__ == '__main__':
-    pass
+    pass    

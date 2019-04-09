@@ -1,18 +1,6 @@
 import pandas as pd
 
-def add_features(df):
-    df['MP'] = df['MP'].astype(float)
-    df['PTS'] = df['PTS'].astype(float)
-    new_column = df.groupby('Player',as_index=False,sort=False)['MP'].rolling(3,min_periods=1).mean()
-    new_column1 = df.groupby('Player',as_index=False,sort=False)['PTS'].rolling(3,min_periods=1).mean()
-    df['Diff MP3'] = df['MP'] - new_column.values
-    df['Diff PTS3'] = df['PTS'] - new_column1.values
-    df['Traded'] = (df['Tm'] == 'TOT').astype(int)
-    df['one'] = 1
-    df['Years Same Team'] = df.groupby(['Player','Tm'])['one'].cumsum()
-    df.drop('one',axis=1,inplace=True)
-    return df
-    
+
 def cleaning(df):
     change_type_data(df)
     final_df = drop_duplicates_useless(df)
