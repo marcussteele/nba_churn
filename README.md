@@ -27,26 +27,31 @@ Some other things i noticed was that surprisingly 75.5% of players leave at the 
 
 Other added features: Whether the team made the playoffs that year or not, difference in minutes played this year from last 3 years, difference in points scored this year from last 3 years, whether they were traded that year or not.
 
-After exploring the data and adding features, I decided to group similar players together to see how a model would do on the groups. This is how the groups are seperated after using KMeans.
-![](img/clusters_pca.png)
+After exploring the data and adding features, I decided to group similar players together to see how a model would do on the groups. This is how the groups are seperated after using KMeans.  
+![](img/clusters_pca.png)  
 I had 38 different features so I had to figure out which of these to use to cluster the groups. At first I decided to pick the features to seperate on. I picked things like points and minutes played and games started. The model did not do very well. I decided to use PCA (principle component analysis) to pick the features to split on for me. Then I put it through KMeans and it did better than the features that I picked.
-- Clusters are split mostly by games played, games started, and minutes played.
-    - Group 0 are players that play most games and start most games
-    - Group 1 are players that play very little games to some games
-    - Group 2 are players that play most games and either dont start or start some games
 Here is the churn % by group:
-![](img/group_churn.png)
-
-The next step was to run it through a model. I picked gradient boosting to run the model through. I did this because boosting models can handle a lot of features and can handle data that is non linear.
+![](img/group_churn.png)  
+The next step was to run it through a model. I did a couple different models. I did a random forest model and a gradient boosted model on these clusters. I also did these models without the clusters. I then compared all of these models.
 
 <a name="results"></a>
 ### RESULTS:
+I needed a baseline to set the bar for these models. The baseline I chose is predicting everyone to leave because that was my majority class. If I predict every player to leave I get an accuracy of 75.5%.
+I will start with what didn't work and then move onto what did work. So I will start with my clustering models. These models did about the same as the baseline.
+RF_clusters:    Acc - 0.76  f1 - 0.85
+GB_clusters:    Acc - 0.78  f1 - 0.85
+RF_all:         Acc - 0.80  f1 - 0.87
+GB_all:         Acc - 0.82  f1 - 0.88  
+Cluster models did not do as well as models without the clusters. The final model that I ended up testing was the gradient boosting model. From that I got some partial dependence plot. Those show how each feature changes predictions of the model as that feature changes. You can see the graphs in the img folder. The part_depend.png and the part_depend2.png.  
+A few takeaways from these graphs. The age graph shows that players between the age 23 and 35 tend to leave more often than players outside that range. That is likely because they are in their prime and probably have more oportunities to go to other teams. The one labeled Diff MP3 is the difference in minutes played using a three year average. The graph shows right a 0 a change. So players that played less minutes that year compared to the last 3 years had a higher probability of leaving.  
+It was interesting to see that salary did not have as much as an impact as I thought it would. Salary didn't show any impact and salary % seems to only matter to the best players.
 
-In the img folder I have partial dependence graphs of the features that showed it made a difference in the model. These graphs show how a certain feature affects the model if everything else was constant. If a graph starts low in the bottom left and goes up to the top right, that means that as that feature increases the person is more likely to leave his team. This is the case with team cap in every cluster.  
-For the starters, Age was another feature that was important. Players that are really young and players that relatively older tend to stay on the team more often than players in the middle. This is shown in the graph below. This is probably because players that are in their prime have more options than players that just started playing or players that are at the end of their career.
-![](img/churn_by_age.png)
 <a name="next"></a>
 ### NEXT STEPS:
+- Try other clusters:
+    - Group by position of the players
+    - 
+- Make a webapp that will show players and their probability of leaving
 
 <a name="how_to"></a>
 ### HOW TO RUN:
