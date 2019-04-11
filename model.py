@@ -64,7 +64,7 @@ if __name__ == '__main__':
     data = combine_data(salary,stats,free_agents)
     final_data = cleaning(data)
     dummies_data = pd.get_dummies(final_data,columns=['Type','Pos.'],drop_first=True)
-    final_data1,fa_this_year = seperate_this_year(dummies_data,this_year)
+    final_data1,fa_this_year = seperate_this_year(dummies_data)
     X = final_data1.drop(['Churn'],axis=1)
     y = final_data1['Churn']
     X_1, x_val, y_1, y_val = train_test_split(X,y,test_size=0.1)
