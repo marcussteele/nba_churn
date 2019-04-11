@@ -11,6 +11,15 @@ def get_data(file):
     return data
 
 def add_features(df):
+    '''
+    INPUT: Takes in a dataframe
+    Adds features:
+    - Diff MP3 - Difference in minutes played that year compared to 3 year average before
+    - Diff PTS3 - Difference in points scored that year compared to 3 year average before
+    - Traded
+    - Years Same Team
+    OUTPUT: DataFrame
+    '''
     df['MP'] = df['MP'].astype(float)
     df['PTS'] = df['PTS'].astype(float)
     new_column = df.groupby('Player',as_index=False,sort=False)['MP'].rolling(3,min_periods=1).mean()

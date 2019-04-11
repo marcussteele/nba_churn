@@ -8,7 +8,16 @@ from import_data import *
 import datetime
 from sklearn.model_selection import train_test_split
 
-def seperate_this_year(df,this_year):
+def seperate_this_year(df):
+    '''
+    INPUT: DataFrame
+    Seperates data from this year. Used for when you don't have complete data
+    for the current year.
+    OUTPUT: DataFrame of all data excluding this year, DataFrame of all data for current year
+    '''
+    now = datetime.datetime.now()
+    this_year = now.year
+    this_year
     df_this_year = df[df['Year']==this_year]
     df_this_year.drop('Churn',axis=1,inplace=True)
     df_before = df[df['Year']!=this_year]
@@ -16,6 +25,11 @@ def seperate_this_year(df,this_year):
     return df_before, df_this_year
 
 def get_threshold(prob,y_test):
+    '''
+    INPUT: array of probabilities, actual target values
+    Finds the optimal probability.
+    OUTPUT: threshold that maximizes f1 score
+    '''
     score = []
     thresholds = []
     sorted_prob = sorted(prob)
@@ -29,6 +43,11 @@ def get_threshold(prob,y_test):
     return final_thresh
 
 def get_preds(probs,y_test):
+    '''
+    INPUT: array of probabilities, actual target values
+
+    OUTPUT: threshold, predicted values
+    '''
     thresh = get_threshold(probs,y_test)
     pred = (probs > thresh).astype(int)
     return thresh,pred
