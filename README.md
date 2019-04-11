@@ -42,9 +42,9 @@ The next step was to run it through a model. I did a couple different models. I 
 I needed a baseline to set the bar for these models. The baseline I chose is predicting everyone to leave because that was my majority class. If I predict every player to leave I get an accuracy of 75.5%.
 
 I will start with what didn't work and then move onto what did work. So I will start with my clustering models. These models did about the same as the baseline.
-RF_clusters:    Acc - 0.76  f1 - 0.85
-GB_clusters:    Acc - 0.78  f1 - 0.85
-RF_all:         Acc - 0.80  f1 - 0.87
+RF_clusters:    Acc - 0.76  f1 - 0.85  
+GB_clusters:    Acc - 0.78  f1 - 0.85  
+RF_all:         Acc - 0.80  f1 - 0.87  
 GB_all:         Acc - 0.82  f1 - 0.88  
 
 Cluster models did not do as well as models without the clusters. The final model that I ended up testing was the gradient boosting model. From that I got some partial dependence plot. Those show how each feature changes predictions of the model as that feature changes. You can see the graphs in the img folder. The part_depend.png and the part_depend2.png.  
