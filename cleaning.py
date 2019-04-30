@@ -39,7 +39,7 @@ def change_type_data(df):
 
 def drop_duplicates_useless(df):
     df = df.loc[:,~df.columns.duplicated()]
-    df.drop(['Pos','To','From','Tm'],axis=1,inplace=True)
+    df.drop(['Pos','To','From'],axis=1,inplace=True)
     df.drop(['3P%','2P%','FT%','FG%','eFG%'],axis=1,inplace=True)
     df_no_nan = df[~(df['MP'].isna())&~(df['Salary'].isna())]
     return df_no_nan
