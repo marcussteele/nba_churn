@@ -7,7 +7,7 @@
 5. [How to Run](#how_to)
 6. [Sources](#source)
 
-![](free_agent.png)
+![](img/free_agent.png)
 <a name='summary'></a>
 ### Summary
 You can see my full write up at https://medium.com/@steelemarcus89/predicting-when-an-nba-player-will-change-teams-3782412ddbf7
