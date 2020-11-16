@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from web_scraping import get_free_agents,get_salaries,get_stats
+from web_scraping import get_free_agents, get_salaries, get_stats
 import pandas as pd
 import datetime
 from collections import defaultdict
@@ -49,16 +49,18 @@ def main():
 
 
     # List of teams that made the playoffs every year
-    playoffs_dict = {'playoffs_2011':['IND','MIA','CHI','POR','DAL','PHI','ATL','NYK','SAS','OKC','DEN','LAL','BOS','ORL','CHA','MEM'],
-                'playoffs_2012':['PHI','CHI','ORL','IND','NYK','MIA','DAL','OKC','BOS','ATL','DEN','LAL','LAC','MEM','UTH','SAS'],
-                'playoffs_2013':['CHI','BKN','GSW','DEN','MEM','LAC','BOS','NYK','ATL','IND','MIL','MIA','HOU','OKC','LAL','SAS'],
-                'playoffs_2014':['ATL','IND','GSW','LAC','MEM','OKC','BKN','TOR','WAS','CHI','POR','HOU','CHA','MIA','DAL','SAS'],
-                'playoffs_2015':['MIL','CHI','NOP','GSW','DAL','HOU','WAS','TOR','BKN','ATL','BOS','CLE','SAS','LAC','POR','MEM'],
-                'playoffs_2016':['BOS','ATL','HOU','GSW','DAL','OKC','IND','TOR','DET','CLE','POR','LAC','CHA','MIA','MEM','SAS'],
-                'playoffs_2017':['IND','CLE','UTH','LAC','MEM','SAS','MIL','TOR','CHI','BOS','POR','GSW','OKC','HOU','ATL','WAS'],
-                'playoffs_2018':['SAS','GSW','MIA','PHI','NOP','POR','WAS','TOR','MIL','BOS','IND','CLE','MIN','HOU','UTH','OKC'],
-                'playoffs_2019':['MIL','TOR','PHI','BOS','ORL','IND','BKN','GSW','DEN','HOU','POR','UTH','OKC','SAS','LAC','DET']}
+    playoffs_dict = {'playoffs_2011': ['IND', 'MIA', 'CHI', 'POR', 'DAL', 'PHI', 'ATL', 'NYK', 'SAS', 'OKC', 'DEN', 'LAL', 'BOS', 'ORL', 'CHA', 'MEM'],
+                'playoffs_2012': ['PHI', 'CHI', 'ORL', 'IND', 'NYK', 'MIA', 'DAL', 'OKC', 'BOS', 'ATL', 'DEN', 'LAL', 'LAC', 'MEM', 'UTH', 'SAS'],
+                'playoffs_2013': ['CHI', 'BKN', 'GSW', 'DEN', 'MEM', 'LAC', 'BOS', 'NYK', 'ATL', 'IND', 'MIL', 'MIA', 'HOU', 'OKC', 'LAL', 'SAS'],
+                'playoffs_2014': ['ATL', 'IND', 'GSW', 'LAC', 'MEM', 'OKC', 'BKN', 'TOR', 'WAS', 'CHI', 'POR', 'HOU', 'CHA', 'MIA', 'DAL', 'SAS'],
+                'playoffs_2015': ['MIL', 'CHI', 'NOP', 'GSW', 'DAL', 'HOU', 'WAS', 'TOR', 'BKN', 'ATL', 'BOS', 'CLE', 'SAS', 'LAC', 'POR', 'MEM'],
+                'playoffs_2016': ['BOS', 'ATL', 'HOU', 'GSW', 'DAL', 'OKC', 'IND', 'TOR', 'DET', 'CLE', 'POR', 'LAC', 'CHA', 'MIA', 'MEM', 'SAS'],
+                'playoffs_2017': ['IND', 'CLE', 'UTH', 'LAC', 'MEM', 'SAS', 'MIL', 'TOR', 'CHI', 'BOS', 'POR', 'GSW', 'OKC', 'HOU', 'ATL', 'WAS'],
+                'playoffs_2018': ['SAS', 'GSW', 'MIA', 'PHI', 'NOP', 'POR', 'WAS', 'TOR', 'MIL', 'BOS', 'IND', 'CLE', 'MIN', 'HOU', 'UTH', 'OKC'],
+                'playoffs_2019': ['MIL', 'TOR', 'PHI', 'BOS', 'ORL', 'IND', 'BKN', 'GSW', 'DEN', 'HOU', 'POR', 'UTH', 'OKC', 'SAS', 'LAC', 'DET'],
+                'playoffs_2020': ['MIL', 'TOR', 'PHI', 'BOS', 'ORL', 'MIA', 'IND', 'BKN', 'LAC', 'LAL', 'POR', 'DEN', 'DAL', 'HOU', 'OKC', 'UTH']}
 
+    
     # Get data for players stats for every year
     stats_dict = dict()
     for year in range(2009,this_year+1):
@@ -109,15 +111,39 @@ def main():
                                                                                                                     .replace(',','')
                                                                                                                     .replace('*','')))
 
-
-    team_dict = {'SAC':'Sacramento Kings','IND':'Indiana Pacers','NJN':'New Jersey Nets','HOU':'Houston Rockets'
-                ,'TOR':'Toronto Raptors','MIN':'Minnesota Timberwolves','GSW':'Golden State Warriors','UTH':'Utah Jazz'
-                ,'NOH':'New Orleans Hornets','CLE':'Cleveland Cavaliers','NYK':'New York Knicks','OKC':'Oklahoma City Thunder'
-                ,'DET':'Detroit Pistons','PHI':'Philadelphia 76ers','PHX':'Phoenix Suns','CHA':'Charlotte Hornets'
-                ,'POR':'Portland Trail Blazers','MIL':'Milwaukee Bucks','MEM':'Memphis Grizzlies','WAS':'Washington Wizards'
-                ,'ORL':'Orlando Magic','LAC':'Los Angeles Clippers','CHI':'Chicago Bulls','ATL':'Atlanta Hawks'
-                ,'SAS':'San Antonio Spurs','DAL':'Dallas Mavericks','BOS':'Boston Celtics','MIA':'Miami Heat'
-                ,'LAL':'Los Angeles Lakers','DEN':'Denver Nuggets','NOP':'New Orleans Pelicans','BKN':'Brooklyn Nets'}
+    team_dict = {
+        'SAC': 'Sacramento Kings',
+        'IND':'Indiana Pacers',
+        'NJN':'New Jersey Nets',
+        'HOU':'Houston Rockets',
+        'TOR': 'Toronto Raptors',
+        'MIN':'Minnesota Timberwolves',
+        'GSW':'Golden State Warriors',
+        'UTH':'Utah Jazz',
+        'NOH': 'New Orleans Hornets',
+        'CLE':'Cleveland Cavaliers',
+        'NYK':'New York Knicks',
+        'OKC':'Oklahoma City Thunder',
+        'DET': 'Detroit Pistons',
+        'PHI':'Philadelphia 76ers',
+        'PHX':'Phoenix Suns',
+        'CHA':'Charlotte Hornets',
+        'POR': 'Portland Trail Blazers',
+        'MIL':'Milwaukee Bucks',
+        'MEM':'Memphis Grizzlies',
+        'WAS':'Washington Wizards',
+        'ORL': 'Orlando Magic',
+        'LAC':'Los Angeles Clippers',
+        'CHI':'Chicago Bulls',
+        'ATL':'Atlanta Hawks',
+        'SAS': 'San Antonio Spurs',
+        'DAL':'Dallas Mavericks',
+        'BOS':'Boston Celtics',
+        'MIA':'Miami Heat',
+        'LAL': 'Los Angeles Lakers',
+        'DEN':'Denver Nuggets',
+        'NOP':'New Orleans Pelicans',
+        'BKN':'Brooklyn Nets'}
 
     team_cap_dict['team_cap_2011']['Team'].iloc[15] = 'Charlotte Hornets'
     team_cap_dict['team_cap_2012']['Team'].iloc[3] = 'Charlotte Hornets'
@@ -205,8 +231,6 @@ def main():
             salary_df = df
         else:
             salary_df = pd.concat([salary_df,df])
-
-
     
 
 if __name__ == "__main__":
