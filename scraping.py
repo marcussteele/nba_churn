@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from web_scraping import get_free_agents, get_salaries, get_stats
+from web_scraping import get_current_year_data, get_past_data, get_team_cap
 import pandas as pd
 import datetime
 from collections import defaultdict
@@ -17,36 +18,11 @@ def main():
 
     # loop through the years to make a new dataframe for each year
     data_dict = dict()
-    for year in years:
-        if year == this_year:
-            url = 'https://www.spotrac.com/nba/free-agents/'
-            try:
-                data = get_free_agents(url, year)
-                data_dict[f'data_{year}'] = data
-            except:
-                # Make a request for the data
-                req = requests.get(url)
-                # get just the content from the html
-                content = req.content
-                soup = BeautifulSoup(content, "lxml")
-                # Get only the table from the webpage
-                tables = soup.find_all('table')
-                # Turn the table to a pandas dataframe
-                data = pd.read_html(str(tables))[0]
-                data['Player'] = data.iloc[:,0]
-                data.drop_duplicates(subset='Player', keep='first', inplace=True)
-                data.set_index('Player', inplace=True)
-                data.drop([data.iloc[:,-1].name, data.iloc[:,0].name, 'Rights'], axis=1, inplace=True)
-                data['From'] = data['Team']
-                data['Year'] = year
-                data = data[['From', 'Type', 'To', 'Pos.', 'Year']]
-                data_dict[f'data_{year}'] = data
-
-        else:
-            url = 'https://www.spotrac.com/nba/free-agents/' + str(year)
-            data = get_free_agents(url,year)
-            data_dict[f'data_{year}'] = data
-
+    cur_data_dict = get_current_year_data(this_year)
+    for year in years[:-1]:
+        year_dict = get_past_data(year)
+        data_dict.update(year_dict)
+    data_dict.update(cur_data_dict)
 
     # List of teams that made the playoffs every year
     ''' ***** Find a way to automate all of this ***** '''
@@ -88,14 +64,11 @@ def main():
             '2020': 'LAL',
         }
     }
-
     
     # Get data for players stats for every year
     stats_dict = dict()
     for year in range(2009, this_year+1):
-        url = f"https://www.basketball-reference.com/leagues/NBA_{year}_per_game.html"
-        data = get_stats(url, year)
-        data['Year'] = year
+        data = get_stats(year)
         stats_dict[f'stats_{year}'] = data
         
     # Add boolean column where 1: team made the playoffs, 0: team did not make the playoffs
@@ -104,41 +77,25 @@ def main():
 
     stats_data = pd.concat(stats_dict.values(), sort=False)
 
-    total_cap_dict = {'2010':57700000,'2011':58044000,'2012':58044000,'2013':58044000,'2014':58679000,'2015':63065000
-                ,'2016':70000000,'2017':94143000,'2018':99093000,'2019':101869000,'2020':109000000}
+    team_cap_dict = dict()
+    total_cap_dict = dict()
+    for year in years:
+        team_yearly_cap, total_cap = get_team_cap(year)
+        team_cap_dict.update(team_yearly_cap)
+        total_cap_dict[str(year)] = total_cap
+
 
     salary_dict = dict()
     for year in years[:-1]:
         if year == this_year:
             url = 'https://hoopshype.com/salaries/players/'
-        
         else:
-            url = 'https://hoopshype.com/salaries/players/{}-{}/'.format(str(year-1),year)
+            url = 'https://hoopshype.com/salaries/players/{}-{}/'.format(str(year-1), year)
 
-        data = get_salaries(url,year)
-        data['Salary1'] = data['{}/{}'.format(year-1, str(year)[2:])]
-        data['Salary'] = data['Salary1'].apply(lambda x: x.replace('$','').replace(',',''))
-        data['Total Cap'] = total_cap_dict[str(year)]
-        data['Salary %'] = data['Salary'].astype(float) / data['Total Cap']
+        data = get_salaries(url, year, total_cap_dict)
         salary_dict[year] = data[['Salary', 'Salary %', 'Year']]
 
-
     salary_data = pd.concat(salary_dict.values())
-
-    team_cap_dict = dict()
-    for year in years:
-        req = requests.get('https://www.spotrac.com/nba/cap/{}/'.format(year))
-        content = req.content
-        soup = BeautifulSoup(content,"lxml")
-        tables = soup.find('table')
-        team_cap_dict[str(year)] = pd.read_html(str(tables))[0]
-        team_cap_dict[str(year)] = team_cap_dict[str(year)][['Team', 'Lux Tax Space']]
-        team_cap_dict[str(year)]['Team'] = team_cap_dict[str(year)]['Team'].apply(lambda x: x[:-3])
-        team_cap_dict[str(year)].set_index('Team')
-        team_cap_dict[str(year)]['Lux Tax Space'] = team_cap_dict[str(year)]['Lux Tax Space'].apply(lambda x: 
-                                                                                                                int(x.replace('$','')
-                                                                                                                    .replace(',','')
-                                                                                                                    .replace('*','')))
 
     team_dict = {
         'SAC': 'Sacramento Kings',
@@ -202,27 +159,27 @@ def main():
 
 
     # Change names to match dataframes together. Most are foreign names to their US names
-    stats_data.rename(index={'Tim Hardaway':'Tim Hardaway Jr'},inplace=True)
-    stats_data.rename(index={'Patty Mills':'Patrick Mills'},inplace=True)
-    stats_data.rename(index={'Ish Smith':'Ishmael Smith'},inplace=True)
-    stats_data.rename(index={'JJ Barea': 'Jose Barea'},inplace=True)
-    stats_data.rename(index={'Eugene Jeter':'Pooh Jeter'},inplace=True)
-    stats_data.rename(index={'Byron Mullens':'BJ Mullens'},inplace=True)
-    stats_data.rename(index={'Glenn Robinson':'Glenn Robinson III'},inplace=True)
-    stats_data.rename(index={'Lou Amundson':'Louis Amundson'},inplace=True)
-    stats_data.rename(index={'Lou Williams':'Louis Williams'},inplace=True)
-    salary_data.rename(index={'Jose Juan Barea':'Jose Barea'},inplace=True)
-    salary_data.rename(index={'Aleksandar Pavlovic':'Sasha Pavlovic'},inplace=True)
-    salary_data.rename(index={'Hidayet Turkoglu':'Hedo Turkoglu'},inplace=True)
-    salary_data.rename(index={'Maurice Williams':'Mo Williams'},inplace=True)
-    salary_data.rename(index={'Nenê':'Nene Hilario'},inplace=True)
-    salary_data.rename(index={'Moe Harkless':'Maurice Harkless'},inplace=True)
-    salary_data.rename(index={'Kelenna Azubuike':'Kelenna Azubuike'},inplace=True)
-    salary_data.rename(index={'Predrag Stojakovic':'Peja Stojakovic'},inplace=True)
-    data.rename(index={'Luc Richard Mbah a Moute':'Luc Mbah a Moute'},inplace=True)
-    salary_data.rename(index={'John Lucas':'John Lucas III'},inplace=True)
-    data.rename(index={'Darrun Hilliard II':'Darrun Hilliard'},inplace=True)
-    data.rename(index={'Otto Porter Jr':'Otto Porter'},inplace=True)
+    stats_data.rename(index={'Tim Hardaway': 'Tim Hardaway Jr'}, inplace=True)
+    stats_data.rename(index={'Patty Mills': 'Patrick Mills'}, inplace=True)
+    stats_data.rename(index={'Ish Smith': 'Ishmael Smith'}, inplace=True)
+    stats_data.rename(index={'JJ Barea': 'Jose Barea'}, inplace=True)
+    stats_data.rename(index={'Eugene Jeter': 'Pooh Jeter'}, inplace=True)
+    stats_data.rename(index={'Byron Mullens': 'BJ Mullens'}, inplace=True)
+    stats_data.rename(index={'Glenn Robinson': 'Glenn Robinson III'}, inplace=True)
+    stats_data.rename(index={'Lou Amundson': 'Louis Amundson'}, inplace=True)
+    stats_data.rename(index={'Lou Williams': 'Louis Williams'}, inplace=True)
+    salary_data.rename(index={'Jose Juan Barea': 'Jose Barea'}, inplace=True)
+    salary_data.rename(index={'Aleksandar Pavlovic': 'Sasha Pavlovic'}, inplace=True)
+    salary_data.rename(index={'Hidayet Turkoglu': 'Hedo Turkoglu'}, inplace=True)
+    salary_data.rename(index={'Maurice Williams': 'Mo Williams'}, inplace=True)
+    salary_data.rename(index={'Nenê': 'Nene Hilario'}, inplace=True)
+    salary_data.rename(index={'Moe Harkless': 'Maurice Harkless'}, inplace=True)
+    salary_data.rename(index={'Kelenna Azubuike': 'Kelenna Azubuike'}, inplace=True)
+    salary_data.rename(index={'Predrag Stojakovic': 'Peja Stojakovic'}, inplace=True)
+    data.rename(index={'Luc Richard Mbah a Moute': 'Luc Mbah a Moute'}, inplace=True)
+    salary_data.rename(index={'John Lucas': 'John Lucas III'}, inplace=True)
+    data.rename(index={'Darrun Hilliard II': 'Darrun Hilliard'}, inplace=True)
+    data.rename(index={'Otto Porter Jr': 'Otto Porter'}, inplace=True)
 
 
 
@@ -230,11 +187,10 @@ def main():
     stats = defaultdict(pd.DataFrame)
     salary = defaultdict(pd.DataFrame)
     team_cap = defaultdict(pd.DataFrame)
-    for year in years:
-        for player in data.index:
-            free_agents[player] = data[data.index == player]
-            stats[player] = stats_data[stats_data.index == player]
-            salary[player] = salary_data[salary_data.index == player]
+    for player in data.index:
+        free_agents[player] = data[data.index == player]
+        stats[player] = stats_data[stats_data.index == player]
+        salary[player] = salary_data[salary_data.index == player]
 
 
     free_agents_df = pd.DataFrame()
