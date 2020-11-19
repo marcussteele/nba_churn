@@ -14,12 +14,13 @@ def main():
     this_year = now.year
 
     # list of years to scrape data for
-    years = list(range(2011, this_year+1))
+    years = list(range(2011, this_year))
+    spotrac_years = list(range(2017, this_year+1))
 
     # loop through the years to make a new dataframe for each year
     data_dict = dict()
     cur_data_dict = get_current_year_data(this_year)
-    for year in years[:-1]:
+    for year in spotrac_years:
         year_dict = get_past_data(year)
         data_dict.update(year_dict)
     data_dict.update(cur_data_dict)
@@ -67,26 +68,31 @@ def main():
     
     # Get data for players stats for every year
     stats_dict = dict()
-    for year in range(2009, this_year+1):
+    for year in years:
         data = get_stats(year)
-        stats_dict[f'stats_{year}'] = data
+        stats_dict[str(year)] = data
         
     # Add boolean column where 1: team made the playoffs, 0: team did not make the playoffs
-    for year in years[:-1]:
-        stats_dict[f'stats_{year}']['Playoffs'] = stats_dict[f'stats_{year}']['Tm'].apply(lambda x: True if x in playoffs_dict['playoffs'][year] else False).astype(int)
+    for year in years:
+        stats_dict[str(year)]['Playoffs'] = stats_dict[str(year)]['Tm'].apply(lambda x: True if x in playoffs_dict['playoffs'][str(year)] else False).astype(int)
+        stats_dict[str(year)]['Finals'] = stats_dict[str(year)]['Tm'].apply(lambda x: True if x in playoffs_dict['finals'][str(year)] else False).astype(int)
+        stats_dict[str(year)]['Champion'] = stats_dict[str(year)]['Tm'].apply(lambda x: True if x in playoffs_dict['champion'][str(year)] else False).astype(int)
 
     stats_data = pd.concat(stats_dict.values(), sort=False)
 
     team_cap_dict = dict()
     total_cap_dict = dict()
-    for year in years:
+    for year in spotrac_years:
         team_yearly_cap, total_cap = get_team_cap(year)
         team_cap_dict.update(team_yearly_cap)
         total_cap_dict[str(year)] = total_cap
 
 
+    total_cap_dict = {
+        
+    }
     salary_dict = dict()
-    for year in years[:-1]:
+    for year in years:
         if year == this_year:
             url = 'https://hoopshype.com/salaries/players/'
         else:
@@ -220,5 +226,5 @@ def main():
 
 if __name__ == "__main__":
     # Create a file to store pickle files in
-    os.system("mkdir data")
+    # os.system("mkdir data")
     main()

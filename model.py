@@ -1,7 +1,7 @@
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import f1_score,confusion_matrix
+from sklearn.metrics import f1_score, confusion_matrix
 from sklearn.ensemble import GradientBoostingClassifier
 from cleaning import *
 from import_data import *
@@ -24,7 +24,7 @@ def seperate_this_year(df):
     df_this_year.to_pickle('this_year.p')
     return df_before, df_this_year
 
-def get_threshold(prob,y_test):
+def get_threshold(prob, y_test):
     '''
     INPUT: array of probabilities, actual target values
     Finds the optimal probability.
@@ -42,7 +42,7 @@ def get_threshold(prob,y_test):
     final_thresh = thresholds[max_index]
     return final_thresh
 
-def get_preds(probs,y_test):
+def get_preds(probs, y_test):
     '''
     INPUT: array of probabilities, actual target values
 
@@ -52,7 +52,7 @@ def get_preds(probs,y_test):
     pred = (probs > thresh).astype(int)
     return thresh,pred
 
-def predict(X_train,y_train,X_test,y_test,testing=True):
+def predict(X_train, y_train, X_test, y_test, testing=True):
     gbc = GradientBoostingClassifier(learning_rate=0.05,max_depth=10,max_features='sqrt',n_estimators=75,subsample=0.75)
     if testing == True:
         gbc.fit(X_train,y_train)
